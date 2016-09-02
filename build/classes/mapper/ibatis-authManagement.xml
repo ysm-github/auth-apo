@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap 
+    PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+    
+<sqlMap namespace="authManagement">
+
+	<!-- 用户信息 -->
+	<typeAlias alias="crmUser1" type="com.sxit.crm.common.bean.system.CrmUser" />
+	
+	<!-- 用户门店信息 -->
+	<typeAlias alias="crmUserShops" type="com.sxit.crm.common.bean.system.CrmUserShop" />
+	 
+    <!-- 角色信息 -->
+	<typeAlias alias="crmRole" type="com.sxit.crm.common.bean.system.CrmRole" />
+	
+	 <!-- 用户角色信息 -->
+	<typeAlias alias="crmUserRole" type="com.sxit.crm.common.bean.system.CrmUserRole" />
+	
+	<!-- 角色门店关系信息 -->
+    <typeAlias alias="crmRoleShop" type="com.sxit.crm.common.bean.system.CrmRoleShop" />
+    
+    <!-- 角色权限关系信息 -->
+    <typeAlias alias="crmRoleRight" type="com.sxit.crm.common.bean.system.CrmRoleRight" />
+    
+    <!-- 模块信息 -->
+    <typeAlias alias="crmFunctionModel" type="com.sxit.crm.common.bean.system.CrmFunctionModel" />
+    
+    <!-- 门店信息 -->
+    <typeAlias alias="crmShopInfo" type="com.sxit.crm.common.bean.system.CrmShopInfo" />
+    
+    <!-- 操作日志 -->
+    <typeAlias alias="sysLogs" type="com.sxit.crm.common.bean.system.SysLogs" />
+    
+	<!-- 店铺信息(返回) -->
+	<resultMap id="searchCrmShopInfoMap" class="crmShopInfo">
+		<result property="shopNo" column="shopNo" />
+		<result property="shopName" column="shopName" />
+		<result property="parentNo" column="parentNo" />
+	</resultMap>	
+	
+	<!-- 用户信息(返回) -->
+	<resultMap id="searchCrmUserMap" class="crmUser1">
+		<result property="userId" column="userId" />
+		<result property="mobile" column="mobile" />
+		<result property="email" column="email" />
+		<result property="nickname" column="nickname" />
+		<result property="password" column="password" />
+		<result property="createTime" column="createTime" />
+		<result property="shopId" column="shopId" />
+		<result property="roleId" column="roleId" />
+		<result property="status" column="status" />
+		<result property="shopName" column="shopName" />
+		<result property="roleName" column="roleName" />
+		<result property="userJobNo" column="userJobNo" />
+		<result property="stopReason" column="stopReason" />
+		<result property="freezeTime" column="freezeTime" />
+		<result property="thawingTime" column="thawingTime" />
+	</resultMap>
+	
+	<!-- 用户门店关系信息(返回) -->
+	<resultMap id="searchcrmUserShopsMap" class="crmUserShops">
+		<result property="userId" column="userId" />
+		<result property="shopNo" column="shopNo" />
+		<result property="shopName" column="shopName" />
+	</resultMap>
+	
+	<!-- 角色信息(返回) -->
+	<resultMap id="searchCrmRoleMap" class="crmRole">
+		<result property="roleId" column="roleId" />
+		<result property="roleName" column="roleName" />
+		<result property="createTime" column="createTime" />
+		<result property="modifyTime" column="modifyTime" />
+		<result property="desc" column="desc" />
+	</resultMap>
+	
+	<!-- 用户门店关系信息(返回) -->
+	<resultMap id="searchcrmUserRolesMap" class="crmUserRole">
+		<result property="userId" column="userId" />
+		<result property="roleId" column="roleId" />
+		<result property="roleName" column="roleName" />
+	</resultMap>
+	
+	<!-- 角色门店关系信息(返回) -->
+	<resultMap id="searchCrmRoleShopMap" class="crmRoleShop">
+		<result property="roleId" column="roleId" />
+		<result property="shopId" column="shopId" />
+	</resultMap>
+	
+	<!-- 角色权限关系信息(返回) -->
+	<resultMap id="searchCrmRoleRightMap" class="crmRoleRight">
+		<result property="roleId" column="roleId" />
+		<result property="modelId" column="modelId" />
+	</resultMap>
+	
+	<!-- 模块信息(返回) -->
+	<resultMap id="searchCrmFunctionModelMap" class="crmFunctionModel">
+		<result property="modelId" column="modelId" />
+		<result property="parentId" column="parentId" />
+		<result property="modelName" column="modelName" />
+		<result property="uri" column="uri" />
+		<result property="desc" column="desc" />
+	</resultMap>
+	
+	<!-- 操作日志(返回) -->
+	<resultMap id="searchSysLogsMap" class="sysLogs">
+		<result property="logid" column="logid" />
+		<result property="userid" column="userid" />
+		<result property="enterpriseid" column="enterpriseid" />
+		<result property="usertype" column="usertype" />
+		<result property="logtime" column="logtime" />
+		<result property="logtype" column="logtype" />
+		<result property="logmessage" column="logmessage" />
+		<result property="ipaddr" column="ipaddr" />
+		<result property="username" column="username" />
+		<result property="result" column="result" />
+		<result property="corpname" column="corpname" />
+	</resultMap>
+
+	<sql id="searchCrmUserSql">
+			where c.shop_status='1'
+			<isNotEmpty  property="shopName" prepend="and">
+				c.shop_name like '%'+#shopName#+'%'
+			</isNotEmpty>
+			<isNotEmpty  property="mobile" prepend="and">
+				a.mobile like '%'+#mobile#+'%'
+			</isNotEmpty>
+			<isEmpty property="showFlag" prepend="and">
+				a.status in(0,3)
+			</isEmpty>
+			<isNotEmpty property="curShopNos" prepend="and">
+			    a.shop_id in
+			    <iterate property="curShopNos" open="(" close=")" conjunction=",">
+			        #curShopNos[]#
+			    </iterate>
+			</isNotEmpty>
+			<isNotEmpty property="showFlag" prepend="and">
+			    <![CDATA[ a.status!=2]]> 
+			</isNotEmpty>
+			<isNotEmpty property="userJobNo" prepend="and">
+                a.User_job_no = #userJobNo#
+            </isNotEmpty>
+            <isNotEmpty property="nickName" prepend="and">
+                a.Nickname like '%'+#nickName#+'%'
+            </isNotEmpty>
+	</sql>
+	
+	
+	<sql id="searchCrmRoleSql">
+		<dynamic prepend="where">
+			<isNotEmpty property="roleId" prepend="and">
+				a.role_Id=#roleId#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 查询用户信息 -->
+	<select id="searchCrmUser" resultMap="searchCrmUserMap" parameterClass="com.sxit.crm.common.bean.system.CrmUserDetailsBean">
+	     select t.* from(
+			  SELECT ROW_NUMBER () OVER (ORDER BY userId DESC) AS RowNumber,
+				     	   t.* FROM(
+				select a.User_id as userId,
+					a.Mobile as mobile,
+					a.Email as email,
+					a.Nickname as nickname,
+					a.User_job_no as userJobNo,
+					a.Password as password,
+					a.Create_time as createTime,
+					a.Shop_id as shopId,
+					a.Role_id as roleId,
+					a.Status as status,
+					a.stop_reason as stopReason,
+					a.freeze_time as freezeTime,
+					a.thawing_time as thawingTime,
+					b.role_name as roleName,
+					c.shop_name as shopName
+				from crm_tsys_user a
+				left join crm_tsys_role b on a.role_id = b.role_id
+				left join crm_tshop_info c on a.shop_id = c.shop_no
+				<include refid="searchCrmUserSql"/>	
+				) t
+			) t
+			<isNotEqual property="isExp" compareValue="1">
+			   <![CDATA[where t.RowNumber>#startPage# and t.RowNumber<=#endPage#]]>
+		    </isNotEqual>
+	</select>	
+	
+	<!-- 查询电商信息 -->
+	<select id="getShopInfos"  resultClass="java.util.HashMap">
+			SELECT  Shop_id as shopId, Shop_NO as shopNo, shop_name as shopName from  crm_tshop_info where  shop_status ='1'
+	</select>
+	
+	
+	<!-- 查询电商信息 -->
+	<select id="getRoles"  resultClass="java.util.HashMap">
+			SELECT  role_id as roleId, Role_name as roleName  from  crm_tsys_role
+	</select>	
+	
+	<!-- 查询用户信息 -->
+	<select id="searchCrmUserCount" resultClass="int" parameterClass="com.sxit.crm.common.bean.system.CrmUserDetailsBean">
+          select count(*) from (	
+			select a.User_id as userId,
+				a.Mobile as mobile,
+				a.Email as email,
+				a.Nickname as nickname,
+				a.Password as password,
+				a.Create_time as createTime,
+				a.Shop_id as shopId,
+				a.Role_id as roleId,
+				a.Status as status,
+				b.role_name as roleName,
+				c.shop_name as shopName
+			from crm_tsys_user a
+			left join crm_tsys_role b on a.role_id = b.role_id
+			left join crm_tshop_info c on a.shop_id = c.shop_no
+			<include refid="searchCrmUserSql"/>	
+		 ) b
+	</select>	
+	<!-- 根据ID查找用户信息 -->
+	<select id="searchCrmUserById"  resultMap="searchCrmUserMap"  parameterClass="java.lang.String">	
+			select a.User_id as userId,
+				a.Mobile as mobile,
+				a.Email as email,
+				a.User_job_no as userJobNo,
+				a.Nickname as nickname,
+				a.Password as password,
+				a.Create_time as createTime,
+				a.Shop_id as shopId,
+				a.Role_id as roleId,
+				a.Status as status,
+				a.stop_reason as stopReason,
+                a.freeze_time as freezeTime,
+                a.thawing_time as thawingTime,
+				b.role_name as roleName,
+				a.shop_id as shopName
+			from crm_tsys_user a
+			left join crm_tsys_role b on a.role_id = b.role_id
+			where a.user_Id=#userId#
+	</select>
+		
+	<!-- 添加用户信息 -->
+	<insert id="addCrmUser" parameterClass="crmUser1">
+        <![CDATA[insert into crm_tsys_user
+			(Mobile,
+			User_job_no,
+			Email,
+			Nickname,
+			Password,
+			create_user_id,
+			Create_time,
+			modify_user_id,
+			modify_time,
+			Shop_id,
+			Role_id,
+			Status,
+			is_admin,
+			alias,
+			title,
+			company,
+			owner_user_id,
+			division,
+			emp_no,
+			phone,
+			extension,
+			fax,
+			identify_code,
+			update_date,
+			user_type,
+			sex,
+			zhiwu,
+			stop_reason,
+			freeze_time,
+			thawing_time)
+		values
+			(#mobile#,
+			#userJobNo#,
+			#email#,
+			#nickname#,
+			#password#,
+			#createUserId#,
+			#createTime#,
+			#modifyUserId#,
+			#modifyTime#,
+			#shopId#,
+			#roleId#,
+			#status#,
+			#isAdmin#,
+			#alias#,
+			#title#,
+			#company#,
+			#ownerUserId#,
+			#division#,
+			#empNo#,
+			#phone#,
+			#extension#,
+			#fax#,
+			#identifyCode#,
+			#updateDate#,
+			#userType#,
+			#sex#,
+			#zhiwu#,
+			#stopReason#,
+            #freezeTime#,
+            #thawingTime#)]]> 
+			
+		<selectKey resultClass="String" keyProperty="userId" > 
+			SELECT @@IDENTITY AS userId
+		</selectKey> 
+	</insert>
+	<!-- 导数据条件用户 -->
+	<insert id="addCrmUser1" parameterClass="crmUser1">
+        <![CDATA[
+            SET IDENTITY_INSERT crm_tsys_user ON
+            insert into crm_tsys_user
+            (User_id,
+            Mobile,
+            User_job_no,
+            Email,
+            Nickname,
+            Password,
+            create_user_id,
+            Create_time,
+            modify_user_id,
+            modify_time,
+            Shop_id,
+            Role_id,
+            Status,
+            is_admin,
+            alias,
+            title,
+            company,
+            owner_user_id,
+            division,
+            emp_no,
+            phone,
+            extension,
+            fax,
+            identify_code,
+            update_date,
+            user_type,
+            sex,
+            zhiwu,
+            stop_reason,
+            freeze_time,
+            thawing_time)
+        values
+            (#userId#,
+            #mobile#,
+            #userJobNo#,
+            #email#,
+            #nickname#,
+            #password#,
+            #createUserId#,
+            #createTime#,
+            #modifyUserId#,
+            #modifyTime#,
+            #shopId#,
+            #roleId#,
+            #status#,
+            #isAdmin#,
+            #alias#,
+            #title#,
+            #company#,
+            #ownerUserId#,
+            #division#,
+            #empNo#,
+            #phone#,
+            #extension#,
+            #fax#,
+            #identifyCode#,
+            #updateDate#,
+            #userType#,
+            #sex#,
+            #zhiwu#,
+            #stopReason#,
+            #freezeTime#,
+            #thawingTime#)]]> 
+    </insert>   	
+	
+	<!-- 更新用户信息 -->
+	<update id="updateCrmUser" parameterClass="crmUser1">
+		update crm_tsys_user 
+			set Shop_id = #shopId#,
+				Mobile = #mobile#,
+				Email = #email#,
+				Nickname = #nickname#,
+				Role_id = #roleId#,
+				User_job_no = #userJobNo#
+			    where User_id = #userId#
+	</update>
+		
+	<!-- 更新用户信息 -->
+	<update id="updateCrmUserPassword" parameterClass="crmUser1">
+		update crm_tsys_user 
+			set password = #password#
+			     where User_id = #userId#
+	</update>	
+		
+	<!-- 更新用户状态 -->
+	<update id="updateCrmUserStatus" parameterClass="crmUser1">
+		<![CDATA[
+			update crm_tsys_user
+				set Status=#status#
+				  where  User_id = #userId#
+		]]>
+	</update>	
+	
+	<!-- 冻结用户操作  -->
+    <update id="freezeCrmUser" parameterClass="crmUser1">
+        <![CDATA[
+            update crm_tsys_user
+                set Status=#status#,
+                    stop_reason=#stopReason#,
+                    freeze_time=#freezeTime#,
+                    thawing_time=NULL
+                  where  User_id = #userId#
+        ]]>
+    </update>  
+    
+    <!-- 解冻用户操作  -->
+    <update id="thawingCrmUser" parameterClass="crmUser1">
+        <![CDATA[
+            update crm_tsys_user
+                set Status=#status#,
+                    stop_reason='',
+                    freeze_time=NULL,
+                    thawing_time=#thawingTime#
+                  where  User_id = #userId#
+        ]]>
+    </update>    
+	
+		<!-- 根据ID查找用户信息 -->
+	<select id="searchCrmRoleById"  resultMap="searchCrmRoleMap"  parameterClass="java.lang.String">	
+			select a.Role_id as roleId,
+				a.Role_name as roleName,
+				a.Create_time as createTime,
+				a.Modify_time as modifyTime,
+				a.[Desc] as [desc]
+			from crm_tsys_role a	
+			where a.Role_id=#roleId#
+	</select>
+		
+	<!-- 查询用户信息 -->
+	<select id="searchCrmRoleCount" resultClass="int" parameterClass="com.sxit.crm.common.bean.system.CrmRoleDetailsBean">
+          select count(*) from (	
+			select a.Role_id as roleId,
+					a.Role_name as roleName,
+					a.Create_time as createTime,
+					a.Modify_time as modifyTime,
+					a.[Desc] as [desc]
+				from crm_tsys_role a
+			<include refid="searchCrmRoleSql"/>	
+		 ) b
+	</select>			
+	 <!-- 查询角色信息 -->
+	<select id="searchCrmRole" resultMap="searchCrmRoleMap" parameterClass="com.sxit.crm.common.bean.system.CrmRoleDetailsBean">
+	     select t.* from(
+			  SELECT ROW_NUMBER () OVER (ORDER BY roleId DESC) AS RowNumber,
+				     	   t.* FROM(
+				select a.Role_id as roleId,
+					a.Role_name as roleName,
+					a.Create_time as createTime,
+					a.Modify_time as modifyTime,
+					a.[Desc] as [desc]
+				from crm_tsys_role a
+				<include refid="searchCrmRoleSql"/>	
+				)t
+			)t
+			<![CDATA[where t.RowNumber>#startPage# and t.RowNumber<=#endPage#]]>
+	</select>
+	
+	 <!-- 查询角色信息 -->
+	<select id="searchCrmRoleByName" resultMap="searchCrmRoleMap" parameterClass="com.sxit.crm.common.bean.system.CrmRoleDetailsBean">
+		select a.Role_id as roleId,
+			a.Role_name as roleName,
+			a.Create_time as createTime,
+			a.Modify_time as modifyTime,
+			a.[Desc] as [desc]
+		from crm_tsys_role a where role_Name = #roleName#
+		and create_Time=#createTime#
+		<include refid="searchCrmRoleSql"/>	
+	</select>
+	
+	<!-- 添加角色信息 -->
+	<insert id="addCrmRole" parameterClass="crmRole">
+		<![CDATA[
+			insert into crm_tsys_role
+				(Role_name,
+				Create_time,
+				Modify_time,
+				[Desc])
+			values
+				(#roleName#,
+				#createTime#,
+				#modifyTime#,
+				#desc#)
+		]]>
+	</insert>	
+	
+	<!-- 更新角色信息 -->
+	<update id="updateCrmRole" parameterClass="crmRole">
+		<![CDATA[
+			update crm_tsys_role 
+			set Role_name = #roleName#,
+				Modify_time = #modifyTime#,
+				[Desc] = #desc#
+				where Role_id = #roleId#
+		]]>
+	</update>	
+	
+	<!-- 查询角色门店关系信息 -->
+	<select id="searchCrmRoleShopByRoleId" resultMap="searchCrmRoleShopMap"  parameterClass="java.lang.String">
+		<![CDATA[
+			select a.role_id as roleId,
+				a.shop_id as shopId
+			from crm_tsys_role_shop a where  a.role_id = #roleId#
+		]]>
+	</select>
+	
+	<!-- 添加角色门店关系信息 -->
+	<insert id="addCrmRoleShop" parameterClass="java.util.Map">
+		<![CDATA[
+			insert into crm_tsys_role_shop
+				(role_id,
+				shop_id)
+			values
+				(#roleId#,
+				#shopId#)
+		]]>
+	</insert>
+	
+	<!-- 删除角色门店关系信息 -->
+	<delete id="delCrmRoleShopByRoleId" parameterClass="java.lang.String">
+		<![CDATA[
+			delete from crm_tsys_role_shop where role_id= #roleId#
+		]]>
+	</delete>	
+	
+	<!-- 查询角色权限关系信息 -->
+	<select id="searchCrmRoleRightByRoleId" resultMap="searchCrmRoleRightMap" parameterClass="java.lang.String">
+		<![CDATA[
+			select a.Role_id as roleId,
+				a.Model_id as modelId
+			from crm_tsys_role_right a where a.role_id = #roleId#
+		]]>
+	</select>	
+	
+	<!-- 查询角色权限关系信息 -->
+	<select id="searchCrmFunctionModel" resultMap="searchCrmFunctionModelMap" parameterClass="java.lang.String">
+		    SELECT model_id as modelId,model_name as modelName,parent_id as parentId, Uri as uri,[Desc] as [desc] 
+		    FROM crm_tsys_function_model where parent_id = #parent_id#  
+	</select>	
+	
+	<!-- 查询角色权限关系信息 -->
+    <select id="searchCrmFunctionModelParentByUser" resultMap="searchCrmFunctionModelMap" parameterClass="crmUser1">
+            SELECT distinct f.model_id as modelId,
+                   f.model_name as modelName,
+                   f.parent_id as parentId, 
+                   f.Uri as uri,
+                   f.[Desc] as [desc] 
+            FROM crm_tsys_function_model f,crm_tsys_role_right rr,dbo.crm_tsys_user u
+            WHERE f.Model_id = rr.Model_id and rr.Role_id in (
+            	select ur.Role_id from crm_tsys_user_role ur where ur.User_id = #userId#
+            	)
+    </select>  
+    
+    <!-- 查询所有模块权限信息 -->
+    <select id="getAllCrmFunctionModel" resultMap="searchCrmFunctionModelMap">
+            SELECT f.model_id as modelId,
+                   f.model_name as modelName,
+                   f.parent_id as parentId, 
+                   f.Uri as uri,
+                   f.[Desc] as [desc] 
+            FROM crm_tsys_function_model f
+    </select>
+    
+	<!-- 添加角色权限关系信息 -->
+	<insert id="addCrmRoleRight" parameterClass="java.util.Map">
+		<![CDATA[
+			insert into crm_tsys_role_right
+				(Role_id,
+				Model_id)
+			values
+				(#roleId#,
+				#modelId#)
+		]]>
+	</insert>	
+	
+	<!-- 删除角色权限关系信息 -->
+	<delete id="delCrmRoleRightByRoleId" parameterClass="java.lang.String">
+		<![CDATA[
+			delete from crm_tsys_role_right where role_id = #roleId#
+		]]>
+	</delete>
+	
+	<!-- 根据店铺编号查询店铺名称 -->
+	<select id="searchCrmShopsByParentNo" resultMap="searchCrmShopInfoMap" parameterClass="java.util.Map">
+  		select a.Shop_no as shopNo, a.Shop_name as shopName, a.Parent_no as parentNo
+  		 from crm_tshop_info a
+  		where a.shop_status ='1' 
+			<isNotEmpty  property="parentNo" prepend="and">
+				 a.Parent_no=#parentNo#
+			</isNotEmpty>
+			<isNotEmpty property="shopNo" prepend="and">
+				a.Shop_no = #shopNo#
+			</isNotEmpty>
+	</select>	
+	
+	<!-- 根据店铺编号查询店铺名称 -->
+	<select id="searchCrmShopsByRoleId" resultMap="searchCrmShopInfoMap" parameterClass="string">
+		select Shop_No as shopNo,Shop_name as shopName,Parent_No as parentNo from dbo.crm_tshop_info a
+		where a.shop_status ='1' and exists(select 1 from crm_tsys_role_shop b where a.Shop_NO = b.shop_id 
+		and b.role_id = #roleId#)
+	</select>	
+
+	<!-- 查询操作日志 -->
+	<select id="searchSysLogs" resultMap="searchSysLogsMap" parameterClass="java.util.Map">
+		<![CDATA[
+			select a.logid as logid,
+				a.userid as userid,
+				a.enterpriseid as enterpriseid,
+				a.usertype as usertype,
+				to_char(a.logtime, 'yyyy-mm-dd hh24:mi:ss') as logtime,
+				a.logtype as logtype,
+				a.logmessage as logmessage,
+				a.ipaddr as ipaddr,
+				a.username as username,
+				a.result as result,
+				a.corpname as corpname
+			from tsys_logs a
+		]]>
+	</select>	
+	
+	<!-- 添加操作日志 -->
+	<insert id="addSysLogs" parameterClass="sysLogs">
+		<![CDATA[
+			insert into tsys_logs
+				(userid,
+				enterpriseid,
+				usertype,
+				logtime,
+				logtype,
+				logmessage,
+				ipaddr,
+				username,
+				result,
+				corpname)
+			values
+				(#userid#,
+				#enterpriseid#,
+				#usertype#,
+				getdate(),
+				#logtype#,
+				#logmessage#,
+				#ipaddr#,
+				#username#,
+				#result#,
+				#corpname#)
+		]]>
+	</insert>	
+	
+	<select id="searchCrmFunctionModelInIds" resultMap="searchCrmFunctionModelMap" parameterClass="java.util.Map">
+            <![CDATA[
+			    SELECT f.model_id as modelId,
+		               f.model_name as modelName,
+		               f.parent_id as parentId, 
+		               f.Uri as uri,
+		               f.[Desc] as [desc] 
+		        FROM crm_tsys_function_model f where f.model_id in
+	        ]]>
+			<iterate property="idList" open="(" close=")" conjunction=",">
+				#idList[]#
+			</iterate>
+	</select>
+	
+	<select id="check" resultMap="searchCrmUserMap" parameterClass="java.util.Map">
+            <![CDATA[
+				   select a.User_id as userId,
+					a.Mobile as mobile,
+					a.Email as email,
+					a.Nickname as nickname,
+					a.Password as password,
+					a.User_job_no as userJobNo,
+					a.Create_time as createTime,
+					a.Shop_id as shopId,
+					a.Role_id as roleId,
+					a.Status as status,
+					a.stop_reason as stopReason,
+                    a.freeze_time as freezeTime,
+                    a.thawing_time as thawingTime,
+					b.role_name as roleName,
+					c.shop_name as shopName
+					from crm_tsys_user a
+				left join crm_tsys_role b on a.role_id = b.role_id
+				left join crm_tshop_info c on a.shop_id = c.shop_id
+	        ]]>
+	        	where c.shop_status ='1'
+	            <isNotEmpty property="nickname" prepend="and">
+	                a.Nickname = #nickname#
+	            </isNotEmpty>
+	            <isNotEmpty property="mobile" prepend="and">
+	                a.Mobile = #mobile#
+	            </isNotEmpty>
+	            <isNotEmpty property="email" prepend="and">
+	                a.Email = #email#
+	            </isNotEmpty>
+	            <isNotEmpty property="userId" prepend="and">
+	                a.User_id != #userId#
+	            </isNotEmpty>
+	            <isNotEmpty property="userJobNo" prepend="and">
+	                a.User_job_no = #userJobNo#
+	            </isNotEmpty>
+	</select>
+	
+	<!-- 插入用户门店关联数据 -->
+	<insert id="addUserShop" parameterClass="crmUserShops">
+	    insert into crm_tsys_user_shop (User_id, Shop_NO) values (#userId#, #shopNo#)
+	</insert>
+	
+	<!-- 删除用户门店关联数据 -->
+	<delete id="delUserShop" parameterClass="crmUserShops">
+	    delete from crm_tsys_user_shop where User_id=#userId#
+	</delete>
+	
+	<!-- 查询用户门店关联数据 -->
+	<select id="searchUserShop" resultMap="searchcrmUserShopsMap" parameterClass="crmUserShops">
+	    select us.User_id as userId, us.Shop_NO as shopNo, s.Shop_name as shopName from crm_tsys_user_shop us, crm_tshop_info s where  s.shop_status='1' and  us.Shop_NO = s.Shop_NO and us.User_id=#userId#
+	</select>
+	
+	<!-- 插入用户角色关联数据 -->
+	<insert id="addUserRole" parameterClass="crmUserRole">
+	    insert into crm_tsys_user_role (User_id, Role_id) values (#userId#, #roleId#)
+	</insert>
+	
+	<!-- 删除用户角色关联数据 -->
+	<delete id="delUserRole" parameterClass="crmUserRole">
+	    delete from crm_tsys_user_role where User_id=#userId#
+	</delete>
+	
+	<!-- 查询用户角色关联数据 -->
+	<select id="searchUserRole" resultMap="searchcrmUserRolesMap" parameterClass="crmUserRole">
+	    select ur.User_id as userId, ur.Role_id as roleId, r.Role_name as roleName from crm_tsys_user_role ur, crm_tsys_role r where ur.Role_id = r.Role_id and ur.User_id=#userId#
+	</select>
+	
+	<delete id="delCrmRoleInfo" parameterClass="String">
+	    delete from crm_tsys_role where Role_id = #roleId#
+	</delete>
+	
+	<delete id="delUserRoleByRoleId" parameterClass="String">
+	    delete from crm_tsys_user_role where Role_id = #roleId#
+	</delete>
+	
+	<!-- 查询用户角色关联数据数量 -->
+	<select id="countRoleUser" resultClass="int" parameterClass="String">
+	    select count(1) from crm_tsys_user_role ur where ur.Role_id = #roleId#
+	</select>
+	
+	<select id="getAuthoritiesByUsername" parameterClass="String" resultClass="crmRole">
+		SELECT DISTINCT crm_tsys_role.* FROM crm_tsys_user INNER JOIN crm_tsys_user_role ON
+		crm_tsys_user.user_id = crm_tsys_user_role.User_id
+		INNER JOIN crm_tsys_role ON crm_tsys_role.role_id = crm_tsys_user_role.role_id
+		WHERE Mobile = #userName#
+	</select>
+
+	<select id="getAllAuthoritys" resultClass="crmRole">
+		SELECT * FROM crm_tsys_role LEFT JOIN crm_tsys_role_right 
+		ON crm_tsys_role.role_id = crm_tsys_role_right.role_id
+		LEFT JOIN crm_tsys_function_model 
+		ON crm_tsys_role_right.Model_id = crm_tsys_function_model.Model_id
+	</select>
+	
+	<select id="findByName" parameterClass="String" resultClass="crmUser1">
+		select * from
+		crm_tsys_user u
+		where u.Mobile = #userName#
+	</select>
+	
+</sqlMap>
